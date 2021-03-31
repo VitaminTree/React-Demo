@@ -21,14 +21,14 @@ class Board extends React.Component {
   }
 
   render() {
-    const rows = 3; 
-    const columns = 3;
+    const rows = this.props.rowCount; 
+    const columns = this.props.colCount;
     var i, j;
     var container = [];
     for (i=0; i < rows; i++) {
       var squares = [];
       for (j=0; j < columns; j++) {
-        squares.push(this.renderSquare(rows*i+j));
+        squares.push(this.renderSquare(columns*i+j));
       }
       container.push(<div className="board-row">{squares}</div>);
     }
@@ -40,10 +40,12 @@ class Game extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      rows: 2,
+      columns: 12,
       history: [{
-        squares: Array(9).fill(null),
-        row: -1,
-        col: -1,
+        squares: Array(100).fill(null), /* Code appears to work despite this array initalizing incorrect # of slots */
+        prevRow: -1,
+        prevCol: -1,
       }],
       stepNumber: 0,
       xIsNext: true,
@@ -63,8 +65,8 @@ class Game extends React.Component {
     this.setState({
       history: history.concat([{
         squares: squares,
-        row: (i%3)+1,
-        col: (Math.floor(i/3))+1,
+        prevRow: (i%(this.state.columns))+1,
+        prevCol: (Math.floor(i/(this.state.columns)))+1,
       }]),
       stepNumber: history.length,
       xIsNext: !this.state.xIsNext, /* Effectively flipping the value of this boolean*/
@@ -85,7 +87,7 @@ class Game extends React.Component {
 
     const moves = history.map((step, move) => {
       const desc = move ?
-        "Move #" + move + ": " + (move%2 === 1? "X" : "O") + " => (" + step.row + ", " + step.col +")":
+        "Move #" + move + ": " + (move%2 === 1? "X" : "O") + " => (" + step.prevRow + ", " + step.prevCol +")":
         "Go to game start";
       return (
         <li key ={move}>
@@ -105,6 +107,8 @@ class Game extends React.Component {
       <div className="game">
         <div className="game-board">
           <Board 
+            rowCount={this.state.rows}
+            colCount={this.state.columns}
             squares={current.squares}
             onClick={(i) => this.handleClick(i)}
           />
