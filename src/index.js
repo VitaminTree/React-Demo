@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createElement } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
@@ -21,25 +21,18 @@ class Board extends React.Component {
   }
 
   render() {
-    return (
-      <div>
-        <div className="board-row">
-          {this.renderSquare(0)}
-          {this.renderSquare(1)}
-          {this.renderSquare(2)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(3)}
-          {this.renderSquare(4)}
-          {this.renderSquare(5)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(6)}
-          {this.renderSquare(7)}
-          {this.renderSquare(8)}
-        </div>
-      </div>
-    );
+    const rows = this.props.rowCount; 
+    const columns = this.props.colCount;
+    var i, j;
+    var container = [];
+    for (i=0; i < rows; i++) {
+      var squares = [];
+      for (j=0; j < columns; j++) {
+        squares.push(this.renderSquare(columns*i+j));
+      }
+      container.push(<div className="board-row">{squares}</div>);
+    }
+    return <div>{container}</div>;
   }
 }
 
@@ -47,8 +40,12 @@ class Game extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      rows: 2,
+      columns: 12,
       history: [{
-        squares: Array(9).fill(null),
+        squares: Array(100).fill(null), /* Code appears to work despite this array initalizing incorrect # of slots */
+        prevRow: -1,
+        prevCol: -1,
       }],
       stepNumber: 0,
       xIsNext: true,
@@ -59,16 +56,20 @@ class Game extends React.Component {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length-1];
     const squares = current.squares.slice();
+    
     if (calculateWinner(squares) || squares[i]) {
       return;
     }
     squares[i] = this.state.xIsNext ? "X" : "O";
+ 
     this.setState({
       history: history.concat([{
         squares: squares,
+        prevRow: (i%(this.state.columns))+1,
+        prevCol: (Math.floor(i/(this.state.columns)))+1,
       }]),
       stepNumber: history.length,
-      xIsNext: !this.state.xIsNext /* Effectively flipping the value of this boolean*/
+      xIsNext: !this.state.xIsNext, /* Effectively flipping the value of this boolean*/
     });
   }
 
@@ -84,9 +85,9 @@ class Game extends React.Component {
     const current = history[this.state.stepNumber];
     const winner = calculateWinner(current.squares);
 
-    const moves = history.map((step,move) => {
+    const moves = history.map((step, move) => {
       const desc = move ?
-        "Go to move #" + move :
+        "Move #" + move + ": " + (move%2 === 1? "X" : "O") + " => (" + step.prevRow + ", " + step.prevCol +")":
         "Go to game start";
       return (
         <li key ={move}>
@@ -106,6 +107,8 @@ class Game extends React.Component {
       <div className="game">
         <div className="game-board">
           <Board 
+            rowCount={this.state.rows}
+            colCount={this.state.columns}
             squares={current.squares}
             onClick={(i) => this.handleClick(i)}
           />
