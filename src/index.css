@@ -33,6 +33,7 @@ body {
   }
   
   .square:focus {
+    background: rgb(255, 252, 94);
     outline: none;
   }
   
